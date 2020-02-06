@@ -1,0 +1,93 @@
+version: '3'
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+    volumes:
+      - "./conf.d:/etc/nginx/conf.d"
+    links:
+      - server
+      - client
+  server:
+    # restart: always
+    image: node:8
+    container_name: server
+    hostname: server
+    volumes:
+      - "./server:/src"
+      - /src/node_modules
+      - "./uploads:/src/uploads"
+    working_dir: /src
+    command: [sh, -c, npm install && npm run dev]
+    ports:
+      - "3000:3000"
+    links:
+      - mongo
+      - mongo-secondary
+
+  client:
+    # restart: always
+    image: node:8-alpine
+    container_name: client
+    hostname: client
+    volumes:
+      - "./client:/src"
+      - "./uploads:/src/uploads"
+    working_dir: /src
+    command: [sh, -c, npm install && npm run dev]
+    ports:
+      - "8080:8080"
+    links:
+      - server
+    logging:
+      driver: "json-file" # defaults if not specified
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  mongo:
+    # restart: always
+    image: mongo
+    volumes:
+      - ./data:/data/db
+      - ./backup/mongo:/backup
+    networks:
+      - default
+      - mongo_link
+    command: --replSet mongo-set
+  mongo-secondary:
+    image: mongo
+    volumes:
+      - ./data_secondary:/data/db
+    networks:
+      - default
+      - mongo_link
+    command: --replSet mongo-set
+  mongo-arbiter:
+    image: mongo
+    networks:
+      - default
+      - mongo_link
+    command: --replSet mongo-set
+  mongo-express:
+    image: mongo-express
+    # restart: always
+    environment:
+      - ME_CONFIG_OPTIONS_EDITORTHEME=ambiance
+      # ME_CONFIG_MONGODB_SERVER will get re-written by consul-template
+      - ME_CONFIG_MONGODB_SERVER=mongo
+    # labels:
+      # - triton.cns.services=mongo-express
+    # network_mode: bridge
+    # env_file: _env
+    ports:
+      - "8081:8081"
+    links:
+      - mongo
+
+networks:
+  mongo_link:
+    external: true
+
