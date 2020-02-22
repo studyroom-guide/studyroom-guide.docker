@@ -23,6 +23,8 @@ services:
     command: [sh, -c, npm install && npm run dev]
     ports:
       - "3000:3000"
+    networks:
+      - default
     links:
       - mongo
       - mongo-secondary
@@ -50,12 +52,17 @@ services:
   mongo:
     # restart: always
     image: mongo
+    hostname: mongo
+    container_name: studyroom-guide_mongo
     volumes:
       - ./data:/data/db
       - ./backup/mongo:/backup
+      - ./mongo_init:/docker-entrypoint-initdb.d
     networks:
       - default
-      - mongo_link
+    depends_on: 
+      - mongo-secondary
+      - mongo-arbiter
     command: --replSet mongo-set
   mongo-secondary:
     image: mongo
@@ -63,13 +70,11 @@ services:
       - ./data_secondary:/data/db
     networks:
       - default
-      - mongo_link
     command: --replSet mongo-set
   mongo-arbiter:
     image: mongo
     networks:
       - default
-      - mongo_link
     command: --replSet mongo-set
   mongo-express:
     image: mongo-express
@@ -86,8 +91,3 @@ services:
       - "8081:8081"
     links:
       - mongo
-
-networks:
-  mongo_link:
-    external: true
-
