@@ -31,14 +31,17 @@ services:
 
   client:
     # restart: always
-    image: node:8-alpine
+    image: node:12-alpine
     container_name: client
     hostname: client
     volumes:
-      - "./client:/src"
+      - "./client2:/src"
       - "./uploads:/src/uploads"
     working_dir: /src
-    command: [sh, -c, npm install && npm run dev]
+    command: [sh, -c, yarn && yarn dev]
+    environment:
+      - PORT=8080
+      - HOST=0.0.0.0
     ports:
       - "8080:8080"
     links:
@@ -47,7 +50,7 @@ services:
       driver: "json-file" # defaults if not specified
       options:
         max-size: "10m"
-        max-file: "3"
+        max-file: "1"
 
   mongo:
     # restart: always
