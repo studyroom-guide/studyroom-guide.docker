@@ -10,6 +10,11 @@ services:
     links:
       - server
       - client
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
   server:
     # restart: always
     image: node:8
@@ -28,6 +33,11 @@ services:
     links:
       - mongo
       - mongo-secondary
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "1m"
+        max-file: "1"
 
   client:
     # restart: always
@@ -37,6 +47,7 @@ services:
     volumes:
       - "./client2:/src"
       - "./uploads:/src/uploads"
+      - client_node_modules:/src/node_modules
     working_dir: /src
     command: [sh, -c, yarn && yarn dev]
     environment:
@@ -47,9 +58,9 @@ services:
     links:
       - server
     logging:
-      driver: "json-file" # defaults if not specified
+      driver: "json-file"
       options:
-        max-size: "10m"
+        max-size: "1m"
         max-file: "1"
 
   mongo:
@@ -63,8 +74,7 @@ services:
       - ./mongo_init:/docker-entrypoint-initdb.d
     networks:
       - default
-    depends_on: 
-      - mongo-secondary
+    depends_on:
       - mongo-arbiter
     command: --replSet mongo-set
   mongo-secondary:
@@ -73,6 +83,9 @@ services:
       - ./data_secondary:/data/db
     networks:
       - default
+    depends_on: 
+      - mongo
+      - mongo-arbiter
     command: --replSet mongo-set
   mongo-arbiter:
     image: mongo
@@ -94,3 +107,7 @@ services:
       - "8081:8081"
     links:
       - mongo
+
+volumes:
+  client_node_modules:
+      
