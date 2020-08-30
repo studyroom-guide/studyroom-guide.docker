@@ -7,6 +7,7 @@ services:
       - "80:80"
     volumes:
       - "./conf.d:/etc/nginx/conf.d"
+      - ./uploads:/var/www/uploads
     links:
       - server
       - client
@@ -46,7 +47,6 @@ services:
     hostname: client
     volumes:
       - "./client2:/src"
-      - "./uploads:/src/uploads"
       - client_node_modules:/src/node_modules
     working_dir: /src
     command: [sh, -c, yarn && yarn dev]
