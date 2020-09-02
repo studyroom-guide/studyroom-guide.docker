@@ -46,7 +46,7 @@ services:
     container_name: client
     hostname: client
     volumes:
-      - "./client2:/src"
+      - "./client:/src"
       - client_node_modules:/src/node_modules
     working_dir: /src
     command: [sh, -c, yarn && yarn dev]
